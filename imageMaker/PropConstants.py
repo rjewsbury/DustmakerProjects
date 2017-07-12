@@ -2,6 +2,7 @@
 #Within each tab, the props are 1-indexed
 
 BACKDROP = (1, 22)
+BACKDROP2 = (2, 22)
 BACKLEAVES = (2, 18)
 BOOKS = (1, 0)
 BOULDERS = (2, 21)
