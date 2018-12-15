@@ -19,7 +19,7 @@ ARGS = (0, 0, True, True)
 # An array of arrays of (dx,dy,prop) tuples to build squares of different sizes
 PROPS = [None for i in range(129)]
 PROPS[1] = [(0, 0, Prop(*ARGS, SCALE, *Group.STORAGE, 4, 0))]
-PROPS[2] = [(-2 / 48, -3 / 48, Prop(*ARGS, 0.141, *Group.STORAGE, 4, 0))]
+PROPS[2] = [(-2 / 48, -3 / 48, Prop(*ARGS, 0.13, *Group.STORAGE, 4, 0))] # 0.141
 PROPS[4] = [(-6 / 48, -9 / 48, Prop(*ARGS, 0.271, *Group.STORAGE, 4, 0))]
 PROPS[8] = [(-14 / 48, -22 / 48, Prop(*ARGS, 0.521, *Group.STORAGE, 4, 0))]
 PROPS[16] = [(-30 / 48, -46 / 48, Prop(*ARGS, 1.000, *Group.STORAGE, 4, 0))]

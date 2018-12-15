@@ -8,9 +8,8 @@ from imageMaker import PropConstants
 a = 'testImages/blackRook.png'      #test for RGBA png
 b = 'testImages/whiteKnight.png'    #test for RGBA png
 c = 'testImages/linkSprite.gif'     #test for P gif
-d = 'testImages/skyhawk33.jpg'      #test for RBG jpeg
-e = 'testImages/GreatWave.png'      #test for 150 paletted png
-f = 'testImages/MonaLisa.png'       #test for 150 paletted png
+d = 'testImages/GreatWave.png'      #test for 150 paletted png
+e = 'testImages/MonaLisa.png'       #test for 150 paletted png
 
 """to create a 150 paletted PNG,
 -   Find any image and Ctrl+Shift+V into Gimp
