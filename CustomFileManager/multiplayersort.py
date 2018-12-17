@@ -3,7 +3,7 @@ import urllib.request as url
 from dustmaker import *
 
 BASE = 'C:/Program Files (x86)/Steam/steamapps/common/Dustforce/user/levels/'
-read_sub = 'noflag/visible/non-multiplayer'
+read_sub = '' # ''noflag/visible/non-multiplayer'
 website = 'https://atlas.dustforce.com/%s/%s'
 
 for map_name in os.listdir(BASE+read_sub):
@@ -22,4 +22,4 @@ for map_name in os.listdir(BASE+read_sub):
     with open(BASE + read_sub + map_name, "rb") as f:
         main_map = read_map(f.read())
 
-    print(map_name,main_map.level_type())
+    print(map_name,LevelType(main_map.level_type()).name)
