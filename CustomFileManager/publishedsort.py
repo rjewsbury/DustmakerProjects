@@ -1,10 +1,21 @@
 import os
 import urllib.request as url
 from enum import IntEnum
+import json
 
-BASE = 'C:/Program Files (x86)/Steam/steamapps/common/Dustforce/user/levels/'
 read_sub = '' #'noflag/'
 website = 'https://atlas.dustforce.com/%s/%s'
+
+_default_dir = "C:/Program Files (x86)/Steam/steamapps/common/Dustforce/user/levels/"
+
+config_file = './_config.json'
+try:
+    with open(config_file, 'r') as f:
+        config_dict = json.load(f)
+except FileNotFoundError:
+    config_dict = {}
+BASE = config_dict.get('level_dir', _default_dir)
+
 
 class Published(IntEnum):
     UNKNOWN = 0
@@ -12,7 +23,8 @@ class Published(IntEnum):
     HIDDEN = 2
     VISIBLE = 3
 
-def get_published_status(map_name, dir=BASE):
+
+def get_published_status(map_name):
     name_split = list(map_name.rsplit('-',1))
     name = name_split[0]
     num = name_split[1]
@@ -32,7 +44,7 @@ if __name__ == '__main__':
         try:
             status = get_published_status(map_name)
             print(map_name, Published(status).name)
-        except:
+        except Exception:
             print(map_name, '---------------------------------------------------------------')
             continue
         if status == Published.HIDDEN:

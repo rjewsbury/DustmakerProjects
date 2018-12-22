@@ -1,7 +1,17 @@
 import urllib, urllib.request as urllib2, time, re
+import json
 
 url_raw = "http://atlas.dustforce.com/gi/downloader.php?id=%d"
-dest_dir = "C:/Program Files (x86)/Steam/steamapps/common/Dustforce/user/levels/%s"
+
+_default_dir = "C:/Program Files (x86)/Steam/steamapps/common/Dustforce/user/levels/"
+
+config_file = './_config.json'
+try:
+    with open(config_file, 'r') as f:
+        config_dict = json.load(f)
+except FileNotFoundError:
+    config_dict = {}
+dest_dir = config_dict.get('level_dir', _default_dir) + '/%s'
 
 
 def download_map(id, dir=dest_dir, debug=False):
