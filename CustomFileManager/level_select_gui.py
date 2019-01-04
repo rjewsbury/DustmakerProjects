@@ -1,5 +1,6 @@
-from tkinter import Tk, messagebox, Frame, Button, Checkbutton, OptionMenu, Label, Message, Entry,\
-    StringVar, IntVar, BooleanVar, BOTH, LEFT, RIGHT, NW, N, E, S, W
+import os
+from tkinter import Tk, messagebox, Frame, Button, Checkbutton, OptionMenu, Label, Message, Entry, \
+    StringVar, IntVar, BooleanVar, BOTH, LEFT, NW, N, E, S, W, X, Menu
 from PIL import Image, ImageTk
 
 from enum import IntEnum
@@ -10,6 +11,7 @@ import webbrowser
 
 from dustmaker import MapReader, BitReader, MapParseException, LevelType
 
+from CustomFileManager import loadmaps
 from CustomFileManager.publishedsort import Published
 from CustomFileManager.random_level_select import\
     Result, dustkid_link, atlas_link, launch, get_level_candidates, process_command
@@ -31,6 +33,18 @@ rank:
 apple_rank:
 hit_apples:
 '''
+_stats_text = '''Total levels\t: %d
+Visible levels\t: %d
+SSable levels\t: %d
+
+Apple levels\t: %d
+Apple SSable\t: %d
+
+Completed count\t: %d
+SS count\t\t: %d
+'''
+_download_text = 'The file for this map does not exist locally.'
+_download_error = 'There was an error trying to download this map!'
 _button_params = {
     'completed': None,
     'ss': False,
@@ -64,7 +78,7 @@ class State(IntEnum):
 
 
 class Window(Frame):
-    def __init__(self, master, level_dict, level_dir):
+    def __init__(self, master, level_dict, level_dir, show_stats=False):
         Frame.__init__(self, master)
         self.master = master
         self.level_dict = level_dict
@@ -74,24 +88,36 @@ class Window(Frame):
         self.kwargs = {}
         self.level_key = None
         self.level_name = None
+        self._show_stats = show_stats
 
         self.master.title('Level Select')
         self.master.resizable(False, False)
         self.pack(fill=BOTH, expand=1)
 
         left = Frame(self)
-        left.pack(side=LEFT, fill=BOTH)
+        left.grid(row=0, column=0, sticky=(N, E, S, W))
         right = Frame(self)
-        right.pack(side=RIGHT, fill=BOTH, expand=1)
+        right.grid(row=0, column=1, sticky=(N, E, S, W))
+
+        self.stats_frame = Frame(self, relief='ridge', borderwidth=2)
+        self.stats_text = StringVar(value='test')
+        Message(self.stats_frame, textvariable=self.stats_text, justify=LEFT).pack()
+        self.show_stats(show_stats)
 
         photo = ImageTk.PhotoImage(_blank_image)
         self.image_label = Label(left, image=photo)
         self.image_label.image = photo
         self.image_label.pack(anchor=NW)
 
+        self.download_label = Label(left, text=_download_text)
+        self.download_button = Button(left, text='Download', command=self.download_map)
+        self.download_label.pack_forget()
+        self.download_button.pack_forget()
+
         self.level_text = StringVar()
         self.level_text.set(_blank_text)
-        Message(left, textvariable=self.level_text, justify=LEFT, width=_img_size[0]).pack(anchor=NW)
+        self.message = Message(left, textvariable=self.level_text, justify=LEFT, width=_img_size[0])
+        self.message.pack(anchor=NW)
 
         self.button_params = []
         for key in _button_params:
@@ -159,6 +185,8 @@ class Window(Frame):
                             self.result_comment.get())
             self.result_comment.set('')
             self.next_map()
+            if self._show_stats:
+                self.update_stats()
 
         Button(right, text='Submit', command=submit).grid(row=next_row, column=_option_columns - 1)
         next_row += 1
@@ -237,6 +265,16 @@ class Window(Frame):
             self.load_image(filename)
             self.load_message(info, candidate_count)
 
+            if os.path.isfile(self.level_dir % filename):
+                self.download_label.pack_forget()
+                self.download_button.pack_forget()
+            else:
+                self.message.pack_forget()
+                self.download_label.config(text=_download_text)
+                self.download_label.pack(anchor=NW)
+                self.download_button.pack(expand=1, fill=X)
+                self.message.pack(anchor=NW)
+
     def load_message(self, info, candidate_count=-1):
         text = ''
         for key in info:
@@ -281,6 +319,36 @@ class Window(Frame):
         self.image_label.configure(image=img_tk)
         self.image_label.image = img_tk
 
+    def download_map(self):
+        filename = loadmaps.download_map(int(self.level_key))
+        if filename is None:
+            self.download_label.config(text=_download_error)
+        else:
+            self.level_dict[self.level_key]['filename']=filename
+            self.download_label.pack_forget()
+            self.download_button.pack_forget()
+            self.load_image(filename)
+
+    def show_stats(self, show=True):
+        self._show_stats = show
+        if show:
+            self.stats_frame.grid(row=0, column=2, sticky=(N, E, S, W))
+            self.update_stats()
+        else:
+            self.stats_frame.grid_forget()
+
+    def update_stats(self):
+        levels = len(self.level_dict)
+        visible = len(get_level_candidates(self.level_dict))
+        ssable = len(get_level_candidates(self.level_dict, ssable=True, playable_type=True,
+                                          allow_hidden=True, allow_unpublished=True, allow_unknown=True))
+        apples = len(get_level_candidates(self.level_dict, has_apples=True,
+                                          allow_hidden=True, allow_unpublished=True, allow_unknown=True))
+        apple_ssable = len(get_level_candidates(self.level_dict, apple_ssable=True, playable_type=True,
+                                                allow_hidden=True, allow_unpublished=True, allow_unknown=True))
+        complete_count = len(get_level_candidates(self.level_dict, completed=True))
+        ss_count = len(get_level_candidates(self.level_dict, ss=True))
+        self.stats_text.set(_stats_text % (levels, visible, ssable, apples, apple_ssable, complete_count, ss_count))
 
 def main():
     root = Tk()
@@ -299,16 +367,17 @@ def main():
     _button_params = options.get('button_params', _button_params)
     _checkbox_params = options.get('checkbox_params', _checkbox_params)
     _entry_params = options.get('entry_params', _entry_params)
+    stats_var = BooleanVar(value=options.get('show_stats', False))
 
     try:
         with open(index_file, 'r') as f:
             level_dict = json.load(f)
     except FileNotFoundError:
         root.withdraw()
-        messagebox.showerror('Error', 'Could not find level index file.\npath: "%s"'%index_file)
+        messagebox.showerror('Error', 'Could not find level index file.\npath: "%s"' % index_file)
         return
 
-    window = Window(root, level_dict, level_dir)
+    window = Window(root, level_dict, level_dir, stats_var.get())
 
     def on_close():
         with open(index_file, 'w') as index:
@@ -324,12 +393,26 @@ def main():
         level_select_options = {
             'button_params': _button_params,
             'checkbox_params': _checkbox_params,
-            'entry_params': _entry_params
+            'entry_params': _entry_params,
+            'show_stats': stats_var.get()
         }
         config_dict['level_select'] = level_select_options
         with open(config_file, 'w') as config:
             json.dump(config_dict, config, indent=4)
         root.destroy()
+
+    menu_bar = Menu(root)
+
+    file_menu = Menu(menu_bar, tearoff=0)
+    file_menu.add_command(label='save and exit', command=on_close)
+    file_menu.add_command(label='exit without saving', command=root.destroy)
+    menu_bar.add_cascade(label='File', menu=file_menu)
+
+    view_menu = Menu(menu_bar, tearoff=0)
+    view_menu.add_checkbutton(label='Show stats',variable=stats_var,command=lambda:window.show_stats(stats_var.get()))
+    menu_bar.add_cascade(label='View', menu=view_menu)
+
+    root.config(menu=menu_bar)
 
     root.protocol('WM_DELETE_WINDOW', on_close)
     root.mainloop()

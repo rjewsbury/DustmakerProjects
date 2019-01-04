@@ -13,11 +13,11 @@ dustkid = 'https://dustkid.com/level/%s/all/0'
 
 
 def get_level_candidates(level_dict, **kwargs):
-    has_end = kwargs.get('has_end', True)
+    has_end = kwargs.get('has_end', None)
     completed = kwargs.get('completed', None)
     ss = kwargs.get('ss', None)
-    playable_type = kwargs.get('playable_type', True)
-    ssable = kwargs.get('ssable', True)
+    playable_type = kwargs.get('playable_type', None)
+    ssable = kwargs.get('ssable', None)
     ss_difficult = kwargs.get('ss_difficult', None)
     name_search = kwargs.get('name_search', None)
     has_apples = kwargs.get('has_apples', None)
