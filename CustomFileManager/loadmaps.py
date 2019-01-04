@@ -14,7 +14,7 @@ except FileNotFoundError:
 dest_dir = config_dict.get('level_dir', _default_dir) + '/%s'
 
 
-def download_map(id, dir=dest_dir, debug=False):
+def download_map(id, dir=dest_dir, debug=False, save_file=True):
     url = url_raw % id
     url_data = urllib2.urlopen(url)
     headers = url_data.info()
@@ -25,9 +25,10 @@ def download_map(id, dir=dest_dir, debug=False):
         name = re.search("filename=\"(.*?)\"", headers["content-disposition"])
         if name:
             name = name.group(1)
-            map = urllib2.URLopener()
-            map.retrieve(url, dir % name)
-            if debug: print(id, name)
+            if save_file:
+                map = urllib2.URLopener()
+                map.retrieve(url, dir % name)
+                if debug: print(id, name)
             return name
         else:
             if debug: print("error:\n", content.read())

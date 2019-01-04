@@ -33,6 +33,7 @@ def get_name_list(**kwargs):
     load_extended = kwargs.get('load_extended', False)
     load_missing = kwargs.get('load_missing', False)
     reload_existing = kwargs.get('reload_existing', False)
+    only_load_visible = kwargs.get('only_download_visible', True)
     lower_bound = kwargs.get('lower_bound', 0)
     upper_bound = kwargs.get('upper_bound', 1000000000)
     min_missing_id = kwargs.get('min_missing_id', 93)
@@ -48,20 +49,24 @@ def get_name_list(**kwargs):
 
     # insert None's so that level IDs match with index
     levels = [None]*(max_id+1)
-    for i in range(lower_bound, min(upper_bound,max_id+1)):
+    for i in range(lower_bound, min(upper_bound, max_id+1)):
         existing_id = level_id(existing[existing_index])
         if (min_missing_id <= i < existing_id) and load_missing:
-            level_name = download_map(i,dest_dir)
-            print('Missing map id %d. Loaded = %s' % (i, str(level_name)))
-            levels[i] = level_name
-            time.sleep(1)
+            visible = (get_published_status('map-%d' % i) == Published.VISIBLE)
+            if (not only_load_visible) or visible:
+                level_name = download_map(i,dest_dir)
+                print('Missing map id %d. Loaded = %s' % (i, str(level_name)))
+                levels[i] = level_name
+                time.sleep(1)
         elif i == existing_id:
             if reload_existing:
-                level_name = download_map(i,dest_dir)
-                print('Reloading map id %d. Loaded = %s' % (i, str(level_name)))
-                time.sleep(1)
-                if level_name is not None and level_name != existing[existing_index]:
-                    existing[existing_index].insert(existing_index, level_name)
+                visible = (get_published_status('map-%d' % i) == Published.VISIBLE)
+                if (not only_load_visible) or visible:
+                    level_name = download_map(i, dest_dir)
+                    print('Reloading map id %d. Loaded = %s' % (i, str(level_name)))
+                    time.sleep(1)
+                    if level_name is not None and level_name != existing[existing_index]:
+                        existing[existing_index].insert(existing_index, level_name)
 
             levels[i] = existing[existing_index]
 
@@ -79,14 +84,20 @@ def get_name_list(**kwargs):
         blank_count = 0
         MAX_BLANKS = 5
         for i in range(max_id+1,upper_bound):
-            name = download_map(i)
+            #only save maps that match the parameters
+            visible = (get_published_status('map-%d' % i) == Published.VISIBLE)
+            save = (not only_load_visible) or visible
+            name = download_map(i, save_file=save)
             if not name:
                 levels.append(None)
                 blank_count += 1
                 if blank_count > MAX_BLANKS:
                     break
             else:
-                levels.append(name)
+                if save:
+                    levels.append(name)
+                else:
+                    levels.append(None)
                 blank_count = 0
 
     # remove trailing None's
@@ -240,9 +251,12 @@ if __name__ == '__main__':
     kwargs = {
         'load_extended': True,
         'load_missing': True,
-        'add_published': True
+        'add_published': True,
+        'add_apple_ranks': True,
+        'lower_bound': 8870
     }
     already_indexed_args = {
-        'add_map': False
+        'add_map': False,
+        'add_apple_ranks': True
     }
     update_index(already_indexed_args, **kwargs)

@@ -1,7 +1,9 @@
 from tkinter import *
+import json
 from CustomFileManager.level_stats import download_stat_files
 from CustomFileManager.create_index import update_index
 
+config_file = './_config.json'
 _option_columns = 2
 _checkbox_params = {
     'generate_rank_file': False,
@@ -9,6 +11,7 @@ _checkbox_params = {
     'load_extended': False,
     'load_missing': False,
     'reload_existing': False,
+    'only_download_visible': True,
     'debug': False
 }
 _entry_params = {
@@ -108,8 +111,45 @@ class Window(Frame):
 def main():
     root = Tk()
 
-    Window(root)
+    try:
+        with open(config_file, 'r') as f:
+            config_dict = json.load(f)
+    except FileNotFoundError:
+        config_dict = {}
 
+    options = config_dict.get('create_index', dict())
+
+    global _checkbox_params, _entry_params, _new_level_params, _existing_level_params
+    _checkbox_params = options.get('checkbox_params', _checkbox_params)
+    _entry_params = options.get('entry_params', _entry_params)
+    _new_level_params = options.get('new_level_params', _new_level_params)
+    _existing_level_params = options.get('existing_level_params', _existing_level_params)
+
+    window = Window(root)
+
+    def on_close():
+        existing_kwargs, kwargs = window.build_kwargs()
+
+        for key in kwargs:
+            if key in _new_level_params:
+                _new_level_params[key] = kwargs[key]
+            elif key in _entry_params:
+                _entry_params[key] = kwargs[key]
+            elif key in _checkbox_params:
+                _checkbox_params[key] = kwargs[key]
+        _existing_level_params.update({key.replace('add', 'update'): val for (key, val) in existing_kwargs.items()})
+        create_index_options = {
+            'checkbox_params': _checkbox_params,
+            'entry_params': _entry_params,
+            'new_level_params': _new_level_params,
+            'existing_level_params': _existing_level_params
+        }
+        config_dict['create_index'] = create_index_options
+        with open(config_file, 'w') as config:
+            json.dump(config_dict, config, indent=4)
+        root.destroy()
+
+    root.protocol('WM_DELETE_WINDOW', on_close)
     root.mainloop()
 
 if __name__ == '__main__':

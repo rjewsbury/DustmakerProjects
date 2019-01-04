@@ -110,6 +110,8 @@ class Result(IntEnum):
     APPLE_SS = 5,
     APPLE_SS_DIFFICULT = 6,
     APPLE_SS_IMPOSSIBLE = 7,
+    CLEAR_RESULTS = 8,
+    CLEAR_RANKS = 9
 
 
 def process_command(command, info, reason=None):
@@ -139,6 +141,22 @@ def process_command(command, info, reason=None):
             del info['apple_ss_difficult']
         if reason is None: reason = input('Reason?: ')
         info['apple_ss_impossible'] = reason
+    elif command == Result.CLEAR_RESULTS:
+        if 'ss_difficult' in info:
+            del info['ss_difficult']
+        if 'ss_impossible' in info:
+            del info['ss_impossible']
+        if 'apple_ss_difficult' in info:
+            del info['apple_ss_difficult']
+        if 'apple_ss_impossible' in info:
+            del info['apple_ss_impossible']
+    elif command == Result.CLEAR_RANKS:
+        if 'rank' in info:
+            del info['rank']
+        if 'apple_rank' in info:
+            del info['apple_rank']
+        if 'hit_apples' in info:
+            del info['hit_apples']
     return info
 
 

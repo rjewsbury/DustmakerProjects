@@ -227,17 +227,17 @@ class Window(Frame):
         self.candidates.remove(key)
         self.level_key = key
         self.level_name = self.level_dict.get(key, _blank_info)['filename']
-        self.load_level(key)
+        self.load_level(key, len(self.candidates))
         if kwargs['auto_launch']:
             launch(self.level_name)
 
-    def load_level(self, key):
+    def load_level(self, key, candidate_count=-1):
             info = self.level_dict[key]
             filename = info['filename']
             self.load_image(filename)
-            self.load_message(info)
+            self.load_message(info, candidate_count)
 
-    def load_message(self, info):
+    def load_message(self, info, candidate_count=-1):
         text = ''
         for key in info:
             space = '\t'
@@ -249,6 +249,8 @@ class Window(Frame):
             elif key == 'published':
                 value = Published(value).name.lower()
             text += '%s:%s%s\n' % (key, space, value)
+        if candidate_count > 0:
+            text += '\n%d other levels match this criteria' % candidate_count
         self.level_text.set(text)
 
     def load_image(self, filename):
@@ -291,6 +293,12 @@ def main():
 
     index_file = config_dict.get('index_file', _default_index)
     level_dir = config_dict.get('level_dir', _default_level_dir) + '/%s'
+    options = config_dict.get('level_select', dict())
+
+    global _button_params, _checkbox_params, _entry_params
+    _button_params = options.get('button_params', _button_params)
+    _checkbox_params = options.get('checkbox_params', _checkbox_params)
+    _entry_params = options.get('entry_params', _entry_params)
 
     try:
         with open(index_file, 'r') as f:
@@ -300,11 +308,27 @@ def main():
         messagebox.showerror('Error', 'Could not find level index file.\npath: "%s"'%index_file)
         return
 
-    Window(root, level_dict, level_dir)
+    window = Window(root, level_dict, level_dir)
 
     def on_close():
-        with open(index_file, 'w') as f:
-            json.dump(level_dict, f, indent=4)
+        with open(index_file, 'w') as index:
+            json.dump(level_dict, index, indent=4)
+        kwargs = window.build_kwargs()
+        for key in kwargs:
+            if key in _button_params:
+                _button_params[key] = kwargs[key]
+            elif key in _checkbox_params:
+                _checkbox_params[key] = kwargs[key]
+            elif key in _entry_params:
+                _entry_params[key] = kwargs[key]
+        level_select_options = {
+            'button_params': _button_params,
+            'checkbox_params': _checkbox_params,
+            'entry_params': _entry_params
+        }
+        config_dict['level_select'] = level_select_options
+        with open(config_file, 'w') as config:
+            json.dump(config_dict, config, indent=4)
         root.destroy()
 
     root.protocol('WM_DELETE_WINDOW', on_close)
