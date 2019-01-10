@@ -94,6 +94,7 @@ class Window(Frame):
         self.master.resizable(False, False)
         self.pack(fill=BOTH, expand=1)
 
+
         left = Frame(self)
         left.grid(row=0, column=0, sticky=(N, E, S, W))
         right = Frame(self)
@@ -346,8 +347,10 @@ class Window(Frame):
                                           allow_hidden=True, allow_unpublished=True, allow_unknown=True))
         apple_ssable = len(get_level_candidates(self.level_dict, apple_ssable=True, playable_type=True,
                                                 allow_hidden=True, allow_unpublished=True, allow_unknown=True))
-        complete_count = len(get_level_candidates(self.level_dict, completed=True))
-        ss_count = len(get_level_candidates(self.level_dict, ss=True))
+        complete_count = len(get_level_candidates(self.level_dict, completed=True,
+                                                  allow_hidden=True, allow_unpublished=True, allow_unknown=True))
+        ss_count = len(get_level_candidates(self.level_dict, ss=True,
+                                            allow_hidden=True, allow_unpublished=True, allow_unknown=True))
         self.stats_text.set(_stats_text % (levels, visible, ssable, apples, apple_ssable, complete_count, ss_count))
 
 def main():

@@ -14,8 +14,8 @@ _default_index = _default_dir + '_level_index.json'
 
 config_file = './_config.json'
 try:
-    with open(config_file, 'r') as f:
-        config_dict = json.load(f)
+    with open(config_file, 'r') as file:
+        config_dict = json.load(file)
 except FileNotFoundError:
     config_dict = {}
 dest_dir = config_dict.get('level_dir', _default_dir) + '/%s'
@@ -229,6 +229,10 @@ def update_index(already_indexed_args={}, **kwargs):
         level_dict = {}
 
     levels = get_name_list(**kwargs)
+    missing_keys = [key for key in level_dict if level_dict[key]['filename'] not in levels]
+    print(missing_keys)
+
+    # deal with the levels stored locally
     for i in range(min_id, min(max_id, len(levels))):
         if levels[i] is not None:
             try:
@@ -244,19 +248,33 @@ def update_index(already_indexed_args={}, **kwargs):
         if i % 100 == 0:
             print('\tprocessed', i, levels[i])
 
+    # deal with the levels not stored locally. Therefore can't access the map file
+    already_indexed_args.update(add_map=False)
+    for key in missing_keys:
+        try:
+            level_dict[key] = add_info(level_dict[key], **already_indexed_args)
+        except Exception as err:
+            print('Error: could not process level', level_dict[key]['filename'])
+            print(traceback.format_exc())
+            print()
+
     with open(index_file, 'w+') as f:
         json.dump(level_dict, f, indent=4)
 
-if __name__ == '__main__':
+
+def main():
     kwargs = {
         'load_extended': True,
         'load_missing': True,
+        'lower_bound': 8870,
         'add_published': True,
-        'add_apple_ranks': True,
-        'lower_bound': 8870
+        'add_apple_ranks': True
     }
     already_indexed_args = {
         'add_map': False,
         'add_apple_ranks': True
     }
     update_index(already_indexed_args, **kwargs)
+
+if __name__ == '__main__':
+    main()

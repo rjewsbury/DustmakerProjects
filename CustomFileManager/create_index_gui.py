@@ -38,7 +38,7 @@ class Window(Frame):
     def __init__(self, master):
         Frame.__init__(self, master)
         self.master = master
-        self.master.title('Level Select')
+        self.master.title('Level Index Builder')
         self.master.resizable(False, False)
         self.pack(fill=BOTH, expand=1)
 
